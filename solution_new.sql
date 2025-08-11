@@ -128,6 +128,41 @@ group by 1,2,3;
 alter table raw_data.cars
 add column id_car_info int;
 
+alter table raw_data.car_info
+add column model varchar(150),
+add column brand varchar(150);
+
+update raw_data.car_info
+set
+	brand = split_part(name_auto, ' ', 1),
+	model = substring(name_auto FROM ' (.*)');
+
+select * from raw_data.car_info;
+
+alter table raw_data.car_info
+drop column name_auto;
+
+create table raw_data.brand(
+	brand_id serial primary key,
+	name_brand varchar(150),
+	country_id integer references raw_data.country (country_id)
+);
+
+select * from raw_data.car_info ci; 
+insert into raw_data.brand(name_brand)
+select distinct brand from raw_data.car_info ci;
+
+alter table raw_data.car_info
+drop column brand;
+
+alter table raw_data.car_info
+add column brand_id integer;
+
+alter table raw_data.car_info 
+add constraint fk_brand_info
+foreign key (brand_id)
+references raw_data.brand(brand_id)
+
 ALTER TABLE raw_data.cars
 ADD CONSTRAINT fk_info_car
 FOREIGN KEY (id_car_info) 
@@ -143,6 +178,36 @@ alter table raw_data.cars
 drop column gasoline_consumption, 
 drop column brand_origin,
 drop column name_auto;
+
+select * from raw_data.car_info
+
+create table raw_data.country (
+	country_id serial primary key,
+	name_country varchar(150)
+);
+
+insert into raw_data.country (name_country)
+select distinct brand_origin from raw_data.car_info;
+
+select * from raw_data.car_info;
+
+
+--Заполнение стран и бренда
+update raw_data.brand b
+set country_id = c.country_id 
+from raw_data.country c
+join raw_data.sales s
+	on s.brand_origin = c.name_country
+where split_part(s.name_auto, ' ', 1) = b.name_brand
+
+
+update raw_data.car_info ci
+set brand_id = b.brand_id 
+from raw_data.brand b
+join raw_data.sales s
+	on split_part(s.name_auto, ' ', 1) = b.name_brand
+where substring(s.name_auto FROM ' (.*)') = ci.model
+
 
 -- Выполнение заданий
 -- Задание 1
